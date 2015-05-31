@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+ <meta charset="UTF-8" />
+ <title>Визуализация графа</title>
+
+ <script src="phaser.min.js"></script>
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+ <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+   <div class="container">
+      <div class="row">
+         <div class="col-sm-8">
+            <div><h4>Режим: <span id="modeView"></span></h4></div>
+            <div id="game_container"></div>
+         </div>
+         <div class="col-sm-2">
+            <div><h4>Меню</h4></div>
+            <div id="modeButtons">
+               <button type="button" class="btn btn-info btn-block" title="клик создает вершину" id="viewButton">Просмотр</button>
+               <br>
+               <button type="button" class="btn btn-primary btn-block" title="клик создает вершину" id="addVertex">Добавить вершину</button>
+               <button type="button" class="btn btn-primary btn-block" title="клик по вершине удаляет ее" id="removeVertex">Удалить вершину</button>
+               <br>
+               <button type="button" class="btn btn-primary btn-block" title="два последовательных клика по вершинам создает ребро между ними" id="addEdge">Добавить ребро</button>
+               <button type="button" class="btn btn-primary btn-block" title="два последовательных клика по вершинам удаляют ребро между ними" id="removeEdge">Удалить ребро</button>
+            </div>
+            <br>
+            <button type="button" class="btn btn-default btn-block" title="" id="saveCanvas">Сохранить</button>
+            <br>
+            <button type="button" class="btn btn-danger btn-block" title="два последовательных клика по вершинам удаляют ребро между ними" id="clearCanvas">Удалить граф</button>
+            <a href="https://github.com/maxbr/graph-visualization" role="button" class="btn btn-link btn-block">github.com</a>
+         </div>
+      </div>
+      </div>
+   </div>
+ 
+   <script src="script.js"></script>
+</body>
+</html>
