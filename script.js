@@ -3,12 +3,24 @@ window.onload = function() {
 
   var vertices = [];
   var edges = [];
+  var weights = [];
   var counter = 0;
 
-  var modes = ['просмотр', 'добавление вершины', 'удаление вершины', 'добавление ребра', 'удаление ребра'];
+  var modes = ['просмотр', 'добавление вершины', 'удаление вершины', 'добавление ребра', 'удаление ребра', 'добавление дуги', 'изменение веса ребра'];
   var currentMode = 0;
+  var weighed = false;
   var modeView = document.getElementById('modeView');
 
+  $("#graph-type").click( function() {
+	  if (!weighed) {
+		$(this).text("Взвешенный граф");
+		weighed = true;
+	  } else {
+		  weighed = false;
+		  $(this).text("Не взвешенный граф");
+	  }
+  });
+  
   var viewButton = document.getElementById('viewButton');
   viewButton.onclick = function() {
     setMode(this, 0);
@@ -32,6 +44,17 @@ window.onload = function() {
   var removeEdge = document.getElementById('removeEdge');
   removeEdge.onclick = function() {
     setMode(this, 4);
+  }
+  
+  var addArc = document.getElementById('addArc');
+  addArc.onclick = function() {
+    setMode(this, 5);
+  }
+  
+  var changeCost = document.getElementById('change-cost');
+  changeCost.onclick = function() {
+	twoLastActiveVerticesForDel = [];
+    setMode(this, 6);
   }
 
   // save functionality implementation
@@ -168,8 +191,15 @@ window.onload = function() {
         } 
         else if ( (twoLastActiveVerticesForAdd.length == 1) && (vertices[activeVertexIndex] != twoLastActiveVerticesForAdd[0]) ) {
           twoLastActiveVerticesForAdd.push(vertices[activeVertexIndex]);
-
+		  var cost = 1.0;
+		  if (weighed) {
+			    cost = prompt("Вес ребра", 1 );                      
+		  }
           edges.push(twoLastActiveVerticesForAdd);
+		  var inverseEdge = twoLastActiveVerticesForAdd.concat([]);;
+		  edges.push(inverseEdge.reverse());
+		  weights.push(cost);
+		  weights.push(cost);
 
           twoLastActiveVerticesForAdd = [];
         } 
@@ -189,17 +219,58 @@ window.onload = function() {
 
           for (i = 0; i < edges.length; i++) {
             if ( (edges[i][0] == twoLastActiveVerticesForDel[0] && edges[i][1] == twoLastActiveVerticesForDel[1]) || 
-                 (edges[i][0] == twoLastActiveVerticesForDel[1] && edges[i][1] == twoLastActiveVerticesForDel[0]) ) {
+					 (edges[i][0] == twoLastActiveVerticesForDel[1] && edges[i][1] == twoLastActiveVerticesForDel[0]) ) {
 
               edges.splice(i, 1);
-              twoLastActiveVerticesForDel = [];
-
-              return;
+			  i--;
             }
           }
+		  twoLastActiveVerticesForDel = [];
         }
 
         break;
+		case 5:
+			if (vertices.length < 2) return;
+
+			twoLastActiveVerticesForDel = [];
+
+			if (twoLastActiveVerticesForAdd.length == 0) {
+			  twoLastActiveVerticesForAdd.push(vertices[activeVertexIndex]);
+			} 
+			else if ( (twoLastActiveVerticesForAdd.length == 1) && (vertices[activeVertexIndex] != twoLastActiveVerticesForAdd[0]) ) {
+			  twoLastActiveVerticesForAdd.push(vertices[activeVertexIndex]);
+			  var cost = 1.0;
+			  if (weighed) {
+					cost = prompt("Вес ребра", 1 );                      
+			  }
+			  edges.push(twoLastActiveVerticesForAdd);
+			  weights.push(cost);
+
+			  twoLastActiveVerticesForAdd = [];
+			} 
+
+			break;
+		case 6:
+			if (edges.length == 0) return;
+
+			twoLastActiveVerticesForAdd = [];
+
+			if (twoLastActiveVerticesForDel.length == 0) {
+			  twoLastActiveVerticesForDel.push(vertices[activeVertexIndex]);
+			}
+			else if (twoLastActiveVerticesForDel.length == 1) {
+			  twoLastActiveVerticesForDel.push(vertices[activeVertexIndex]);
+			  var newWeight = parseFloat(prompt("Вес ребра"));
+			  for (i = 0; i < edges.length; i++) {
+				if ( (edges[i][0] == twoLastActiveVerticesForDel[0] && edges[i][1] == twoLastActiveVerticesForDel[1])|| 
+					 (edges[i][0] == twoLastActiveVerticesForDel[1] && edges[i][1] == twoLastActiveVerticesForDel[0]) ) {
+
+				  weights[i] = newWeight;
+				}
+			  }
+			  twoLastActiveVerticesForDel = [];
+			}
+			break;
     }
   }
 
@@ -207,15 +278,42 @@ window.onload = function() {
 
   }
 
+  var texts = [];
   function render() {
+	  for (var i = 0; i < texts.length; i++) {
+		  texts[i].destroy();  
+	  }
+	  texts = [];
     if (edges.length > 0) {
       game.context.strokeStyle = 'rgb(0,0,255)';
       game.context.beginPath();
       
       for (i = 0; i < edges.length; i++) {
         if ( (edges[i][0] != null) && edges[i][1] != null ) {
-          game.context.moveTo(edges[i][0].x(), edges[i][0].y());
-          game.context.lineTo(edges[i][1].x(), edges[i][1].y());
+			// edge case
+			if (arcExists(edges[i][1], edges[i][0])) {
+			  game.context.moveTo(edges[i][0].x(), edges[i][0].y());
+			  game.context.lineTo(edges[i][1].x(), edges[i][1].y());
+			} 
+			// Arc
+			else {
+				game.context.moveTo(edges[i][0].x(), edges[i][0].y());
+			    game.context.lineTo(edges[i][1].x(), edges[i][1].y());
+				
+				// pointer
+				var dx = edges[i][1].x() - edges[i][0].x();
+				var dy = edges[i][1].y() - edges[i][0].y();
+				var k = 30 / Math.sqrt(dx * dx + dy * dy);
+				var angle = Math.atan(dx / dy);
+				game.context.arc(edges[i][1].x() - k * dx, edges[i][1].y() - k * dy, 5, angle, Math.PI, true);
+				game.context.lineTo(edges[i][1].x(), edges[i][1].y());
+			}
+			if (weighed) {
+				texts.push(game.add.text((edges[i][1].x() + edges[i][0].x()) / 2, 
+											(edges[i][1].y() + edges[i][0].y()) / 2, 
+											weights[i], 
+											{ font: "18px Arial", fill: "#ff0000", align: "center" }));
+			}
         }
       }
 
@@ -234,5 +332,124 @@ window.onload = function() {
     }
 
     modeView.innerHTML = modes[currentMode];
+	if (inputType == 0) {
+		var inputText = document.getElementById("input-text");
+		inputText.innerHTML = "";
+		var adjaciencyMatrix = adjMat();
+		for (var i = 0; i < adjaciencyMatrix.length; i++) {
+			for (var j = 0; j < adjaciencyMatrix[i].length; j++) {
+				inputText.innerHTML += parseAdjMatPattern(adjaciencyMatrix[i][j], getEdgeWeight(vertices[i], vertices[j]));
+			}
+			inputText.innerHTML += "<br/>";
+		}
+	} else if (inputType == 1) {
+		var inputText = document.getElementById("input-text");
+		inputText.innerHTML = "";	
+		var adjaciencyList = adjList();
+		for (var i = 0; i < adjaciencyList.length; i++) {
+			inputText.innerHTML += parseAdjListPattern(adjaciencyList[i][0], adjaciencyList[i][1], adjaciencyList[i][2]) + "<br/>";
+		}
+	}
   }
+  
+  
+  // slavik
+
+	// input type
+	// 0 - adj. matrix
+	// 1 - adj. list
+	var inputType = 0;
+	
+	function getEdgeWeight(a, b) {
+		for (var i = 0; i < edges.length; i++) {
+			if (edges[i][0] == a && edges[i][1] == b) {
+				return weights[i];
+			}
+		}	
+		return "inf";
+	}
+
+	function arcExists(a, b) {
+		for (var i = 0; i < edges.length; i++) {
+			if (edges[i][0] == a && edges[i][1] == b) {
+				return true;
+			}
+		}	
+		return false
+	}
+
+	function adjMat() {
+		var adj = [];
+		for (var i = 0; i < vertices.length; i++) {
+			var adjForCur = [];
+			for (var  j = 0; j < vertices.length; j++) {
+				if (arcExists(vertices[i], vertices[j])) {
+					adjForCur.push(1);
+				} else {
+					adjForCur.push(0);
+				}
+			}
+			adj.push(adjForCur);
+		}
+		return adj;
+	}
+	
+	function adjList() {
+		var adj = [];
+		for (var i = 0; i < vertices.length; i++) {
+			var adjVertices = [];
+			var adjWeights = [];
+			for (var  j = 0; j < vertices.length; j++) {
+				if (arcExists(vertices[i], vertices[j])) {
+					adjVertices.push(vertices[j].number);
+					adjWeights.push(getEdgeWeight(vertices[i], vertices[j]));
+				}
+			}
+			adj.push([vertices[i].number, adjVertices, adjWeights]);
+		}
+		return adj;
+	}
+	
+	function parseAdjMatPattern(isAdj, c) {
+		var pattern = document.getElementById("ms-pattern").value;
+		return pattern.replace("%isAdj%", isAdj).replace("%c%", c);
+	}
+	
+	// v1 - number of vertex
+	// v2 - list of adj. vertices
+	// c - list of weight of adj. vertices
+	function parseAdjListPattern(v1, v2, c) {
+		var pattern = document.getElementById("ss-pattern").value;
+		var regExp = /{.*}/g;
+		var elemPattern
+		try {
+			elemPattern = (regExp.exec(pattern)[0]);
+		} catch(e) {
+			return "";
+		}
+		
+		elemPattern = elemPattern.substring(1, elemPattern.length - 1);
+		pattern = pattern.replace(regExp, "");
+		pattern = pattern.replace("%v1%", v1);
+		for (var i = 0; i < v2.length; i++) {
+			var elem = elemPattern.replace("%v2%", v2[i]).replace("%c%", c[i]);
+			pattern += elem;
+		}
+		return pattern;
+	}
+
+	var inputTypeRadio = document.getElementsByName("input-type");
+	for(var i = 0; i < inputTypeRadio.length; i++){
+		inputTypeRadio[i].onclick = function(){
+			if(this.value == "ms") {
+				inputType = 0;
+				document.getElementById("ss-pattern").disabled = true;
+			}
+			else {
+				inputType = 1;
+				document.getElementById("ss-pattern").disabled = false;
+			}
+		};
+	}
 };
+
