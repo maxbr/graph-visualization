@@ -99,6 +99,7 @@ window.onload = function() {
     }
     vertices = [];
     edges = [];
+	weights = [];
     counter = 0;
     setMode(null, 0);
   };
@@ -155,9 +156,13 @@ window.onload = function() {
   twoLastActiveVerticesForDel = [];
 
   function onTapHandler() {
-
     var activeVertexIndex = getActiveVertex();
-
+	if (activeVertexIndex == null && currentMode > 2) {
+		twoLastActiveVerticesForDel = [];
+		twoLastActiveVerticesForAdd = [];
+		return;
+	}
+	
     switch(currentMode) 
     {
       case 1:
@@ -195,11 +200,13 @@ window.onload = function() {
 		  if (weighed) {
 			    cost = prompt("Вес ребра", 1 );                      
 		  }
-          edges.push(twoLastActiveVerticesForAdd);
-		  var inverseEdge = twoLastActiveVerticesForAdd.concat([]);;
-		  edges.push(inverseEdge.reverse());
-		  weights.push(cost);
-		  weights.push(cost);
+		  if (cost) {
+			  edges.push(twoLastActiveVerticesForAdd);
+			  var inverseEdge = twoLastActiveVerticesForAdd.concat([]);;
+			  edges.push(inverseEdge.reverse());
+			  weights.push(cost);
+			  weights.push(cost);
+		  }
 
           twoLastActiveVerticesForAdd = [];
         } 
@@ -243,8 +250,17 @@ window.onload = function() {
 			  if (weighed) {
 					cost = prompt("Вес ребра", 1 );                      
 			  }
-			  edges.push(twoLastActiveVerticesForAdd);
-			  weights.push(cost);
+			  if (cost) {
+				  for (i = 0; i < edges.length; i++) {
+					if ( (edges[i][0] == twoLastActiveVerticesForAdd[0] && edges[i][1] == twoLastActiveVerticesForAdd[1])|| 
+						 (edges[i][0] == twoLastActiveVerticesForAdd[1] && edges[i][1] == twoLastActiveVerticesForAdd[0]) ) {
+							 weights[i] = cost;
+					}
+				  }
+				  
+				  edges.push(twoLastActiveVerticesForAdd);
+				  weights.push(cost);
+			  }
 
 			  twoLastActiveVerticesForAdd = [];
 			} 
@@ -260,13 +276,15 @@ window.onload = function() {
 			}
 			else if (twoLastActiveVerticesForDel.length == 1) {
 			  twoLastActiveVerticesForDel.push(vertices[activeVertexIndex]);
-			  var newWeight = parseFloat(prompt("Вес ребра"));
-			  for (i = 0; i < edges.length; i++) {
-				if ( (edges[i][0] == twoLastActiveVerticesForDel[0] && edges[i][1] == twoLastActiveVerticesForDel[1])|| 
-					 (edges[i][0] == twoLastActiveVerticesForDel[1] && edges[i][1] == twoLastActiveVerticesForDel[0]) ) {
+			  var newWeight = prompt("Вес ребра");
+			  if (newWeight) {
+				  for (i = 0; i < edges.length; i++) {
+					if ( (edges[i][0] == twoLastActiveVerticesForDel[0] && edges[i][1] == twoLastActiveVerticesForDel[1])|| 
+						 (edges[i][0] == twoLastActiveVerticesForDel[1] && edges[i][1] == twoLastActiveVerticesForDel[0]) ) {
 
-				  weights[i] = newWeight;
-				}
+					  weights[i] = newWeight;
+					}
+				  }
 			  }
 			  twoLastActiveVerticesForDel = [];
 			}
@@ -304,8 +322,8 @@ window.onload = function() {
 				var dx = edges[i][1].x() - edges[i][0].x();
 				var dy = edges[i][1].y() - edges[i][0].y();
 				var k = 30 / Math.sqrt(dx * dx + dy * dy);
-				var angle = Math.atan(dx / dy);
-				game.context.arc(edges[i][1].x() - k * dx, edges[i][1].y() - k * dy, 5, angle, Math.PI, true);
+				var angle = Math.acos(dx / Math.sqrt(dx * dx + dy * dy)) * Math.sign(dy) - Math.PI;
+				game.context.arc(edges[i][1].x() - k * dx, edges[i][1].y() - k * dy, 5, angle - Math.PI / 2, angle + Math.PI / 2, true);
 				game.context.lineTo(edges[i][1].x(), edges[i][1].y());
 			}
 			if (weighed) {
@@ -351,9 +369,6 @@ window.onload = function() {
 		}
 	}
   }
-  
-  
-  // slavik
 
 	// input type
 	// 0 - adj. matrix
@@ -443,13 +458,20 @@ window.onload = function() {
 		inputTypeRadio[i].onclick = function(){
 			if(this.value == "ms") {
 				inputType = 0;
-				document.getElementById("ss-pattern").disabled = true;
+				$("#ss-info").hide();
+				$("#ms-info").show();
 			}
 			else {
 				inputType = 1;
-				document.getElementById("ss-pattern").disabled = false;
+				$("#ms-info").hide();
+				$("#ss-info").show();
 			}
 		};
 	}
+	
+	$(".panel-heading").click( function() {
+		//if ($("#panel-body").display() == "block")
+			$("#panel-body").toggle(500);
+	});
 };
 
