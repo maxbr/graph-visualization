@@ -1,42 +1,72 @@
 <!DOCTYPE HTML>
 <html>
 <head>
- <meta charset="UTF-8" />
- <title>Визуализация графа</title>
-
- <script src="phaser.min.js"></script>
- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
- <link rel="stylesheet" href="style.css">
+	<meta charset="UTF-8" />
+	<title>Визуализация графа</title>
+	<script src="assets/phaser.min.js"></script>
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.css">
+	<link rel="stylesheet" href="assets/style.css">
 </head>
 
 <body>
-   <div class="container">
-      <div class="row">
-         <div class="col-sm-8">
-            <div><h4>Режим: <span id="modeView"></span></h4></div>
-            <div id="game_container"></div>
-         </div>
-         <div class="col-sm-2">
-            <div><h4>Меню</h4></div>
-            <div id="modeButtons">
-               <button type="button" class="btn btn-info btn-block" title="клик создает вершину" id="viewButton">Просмотр</button>
-               <br>
-               <button type="button" class="btn btn-primary btn-block" title="клик создает вершину" id="addVertex">Добавить вершину</button>
-               <button type="button" class="btn btn-primary btn-block" title="клик по вершине удаляет ее" id="removeVertex">Удалить вершину</button>
-               <br>
-               <button type="button" class="btn btn-primary btn-block" title="два последовательных клика по вершинам создает ребро между ними" id="addEdge">Добавить ребро</button>
-               <button type="button" class="btn btn-primary btn-block" title="два последовательных клика по вершинам удаляют ребро между ними" id="removeEdge">Удалить ребро</button>
-            </div>
-            <br>
-            <button type="button" class="btn btn-default btn-block" title="" id="saveCanvas">Сохранить</button>
-            <br>
-            <button type="button" class="btn btn-danger btn-block" title="два последовательных клика по вершинам удаляют ребро между ними" id="clearCanvas">Удалить граф</button>
-            <a href="https://github.com/maxbr/graph-visualization" role="button" class="btn btn-link btn-block">github.com</a>
-         </div>
-      </div>
-      </div>
-   </div>
- 
-   <script src="script.js"></script>
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-8">
+				<div><h4>Режим: <span id="modeView"></span></h4></div>
+				<div id="graph-container"></div>
+			</div>
+			<div class="col-sm-2">
+				<div><h4>Меню</h4></div>
+				<button type="button" class="btn btn-warning btn-block" title="переключить тип графа" id="graph-type">Невзвешенный граф</button>
+				<br>
+				<div id="modeButtons">
+					<button type="button" class="btn btn-info btn-block" title="клик создает вершину" id="viewButton">Просмотр</button>
+					<br>
+					<button type="button" class="btn btn-primary btn-block" title="клик создает вершину" id="addVertex">Добавить вершину</button>
+					<button type="button" class="btn btn-primary btn-block" title="клик по вершине удаляет ее" id="removeVertex">Удалить вершину</button>
+					<br>
+					<button type="button" class="btn btn-primary btn-block" title="два последовательных клика по вершинам создает неориентированное ребро между ними" id="addEdge">Добавить ребро</button>
+				<button type="button" class="btn btn-primary btn-block" title="два последовательных клика по вершинам создает ориентированное ребро между ними" id="addArc">Добавить дугу</button>
+				<button type="button" class="btn btn-primary btn-block" title="два последовательных клика по вершинам позволяют изменить вес ребра между ними" id="changeCost">Изменить вес</button>
+					<button type="button" class="btn btn-primary btn-block" title="два последовательных клика по вершинам удаляют ребро между ними" id="removeEdge">Удалить ребро</button>
+				</div>
+				<br>
+				<button type="button" class="btn btn-default btn-block" title="" id="saveCanvas">Сохранить</button>
+				<br>
+				<button type="button" class="btn btn-danger btn-block" title="два последовательных клика по вершинам удаляют ребро между ними" id="clearCanvas">Удалить граф</button>
+				<a href="https://github.com/maxbr/graph-visualization" role="button" class="btn btn-link btn-block">github.com</a>
+			</div>
+		</div>
+		<div class="row">
+			<div id="extra-panel" class="col-sm-10">
+				<div class="panel panel-default">
+					<div class="panel-heading"><h4 title="кликните, чтобы открыть">Вывод графа</h4></div>
+					<div id="panel-body" class="panel-body">
+						<div>
+							<label class="radio-inline"><input type="radio" name="input-type" value="ms" checked /><strong>Матрица смежности</strong></label>
+							<label class="radio-inline"><input type="radio" name="input-type" value="ss" /><strong>Список смежности</strong></label>
+						</div>
+
+						<div id="ms-info">
+							<strong>%isAdj%</strong> - Является ли вершина достижимой<br>
+							<strong>%c%</strong> - Вес инцидентной дуги (ребра)<br>
+							<p>Шаблон для матрицы смежности: <input type="text" id="ms-pattern" value="(%isAdj%, %c%)" /><p>
+						</div>
+						
+						<div id="ss-info">
+							<strong>%v1%</strong> - Вершина в списке смежности<br>
+							<strong>%v2%</strong> - Вершина, связанная дугой (ребром) с v1<br>
+							<strong>%с%</strong> - Вес инцидентной дуги (ребра)<br>
+							<strong>{}</strong> - Обозначение списка достижимых вершин. Внутри него находится шаблон для достижимой вершины. Является обязательным!<br>
+							<p>Шаблон для списка смежности: <input type="text" id="ss-pattern" value="%v1% : {(%v2%, %c%)}" /><p>
+						</div>
+						<div id="input-text"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="assets/script.js"></script>
 </body>
 </html>

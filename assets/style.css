@@ -1,0 +1,16 @@
+body {
+	padding: 30px;
+	background: #C2C4C0;
+}
+
+#graph-container {
+	width: 700px;
+}
+
+#panel-body, #ss-info {
+	display: none;
+}
+
+#extra-panel {
+	margin-top: 30px;
+}
